@@ -1,0 +1,8 @@
+"radius": 10
+"emotes":
+  "coin":
+    - "$player$ flips a coin: heads"
+    - "$player$ flips a coin: tails"
+    - "$player$ flips a coin: it landed on its edge... HOW???"
+  "d20":
+    - "$player$ flips a coin: $random|1|20$"

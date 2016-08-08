@@ -1,0 +1,11 @@
+name: randomizedEmotes
+main: randomizedEmotes.main
+version: 0.0.1-SNAPSHOT
+
+commands:
+    randemote:
+        description: Main randomized emotes command
+        aliases: [re]
+        usage: /randemote
+        permission: randomEmote.use
+        permission-message: Sorry, but you don't have the permission to execute this command
