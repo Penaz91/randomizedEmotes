@@ -5,4 +5,5 @@
     - "$player$ flips a coin: tails"
     - "$player$ flips a coin: it landed on its edge... HOW???"
   "d20":
-    - "$player$ flips a coin: $random|1|20$"
+    - "$player$ throws a 20-sided dice: $random|1|20$"
+    - "$player$ throws a D-20: $random|1|20$"
