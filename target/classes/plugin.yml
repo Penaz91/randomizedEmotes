@@ -9,6 +9,12 @@ commands:
         usage: /randemote
         permission: randomEmote.use
         permission-message: Sorry, but you don't have the permission to execute this command
+    randemotereload:
+        description: reloads the config file
+        aliases: [rer]
+        usage: /randemote
+        permission: randomEmote.reload
+        permission-message: Sorry, but you don't have the permission to execute this command
     emotegui:
         description: GUI List of Emotes
         aliases: [egui]

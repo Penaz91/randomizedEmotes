@@ -60,6 +60,14 @@ public class main extends JavaPlugin{
 		getServer().getPluginManager().registerEvents(new PlayerLogoutListener(), this);
 		generateItems();
 	}
+	
+	public boolean reloadConfigCommand(){
+		reloadConfig();
+		config = getConfig();
+		emotes = config.getConfigurationSection("emotes"); //loads the emote list as ConfigurationSection
+		generateItems();
+		return true;
+	}
 
 	public static void generateItems(){
 		for (String item: emotes.getKeys(false)){
@@ -218,6 +226,11 @@ public class main extends JavaPlugin{
 		if (cmd.getName().equalsIgnoreCase("emotegui")){
 			createAndShowGUI((Player) sender);
 			return true;
+		}
+		if (cmd.getName().equalsIgnoreCase("randemotereload")){
+			reloadConfigCommand();
+			sender.sendMessage("Config Reloaded");
+			getLogger().info("[RandEmote] Config Reloaded");
 		}
 		if (cmd.getName().equalsIgnoreCase("randemote")){
 			// If called with no arguments it just shows Plugin infos and emote list
