@@ -21,6 +21,7 @@ public class main extends JavaPlugin{
 	public static ConfigurationSection emotes = null;
 	public static Random rndGen = new Random();
 	public static Configuration config = null;
+	public static String defaultPermissionMessage = "You don't have permissions to use this emote";
 	@Override
 	public void onEnable(){
 		config = this.getConfig(); //loads the config
@@ -67,51 +68,57 @@ public class main extends JavaPlugin{
 			if (args.length == 1){
 				//Emote things here
 				if (emotes.contains(args[0])){
-					List<String> section = emotes.getStringList(args[0]);
-					String phrase = section.get(rndGen.nextInt(section.size()));
-					phrase = colorize(phrase);
-					phrase = phrase.replaceAll("\\$player\\$", sender.getName());
-					@SuppressWarnings("deprecation")
-					Player snd = Bukkit.getPlayer(sender.getName());
-					// I get all the entities in a cubic radius defined in the config
-					List<Entity> lst = snd.getNearbyEntities(config.getInt("radius"), config.getInt("radius"), config.getInt("radius"));
-					/* Here I filter out $random|number|number$ and make it so it generates a random Integer, the regex is what allows me to
-					 * filter it out, \d means "A number digit" \d+ instead is "One or more number digits" 
-					 */
-					while (phrase.contains("$random")){
-						Pattern p = Pattern.compile("\\$random\\|\\d+\\|\\d+\\$");
-						Matcher m = p.matcher(phrase);
-						if (m.find()){
-							int beginning = m.start();
-							int end = m.end();
-							/*
-							 * Here I extract the information from the $random$ text variable, by splitting out the | symbols in an array
-							 * splitted [0] = "random" in any case
-							 * splitted [1] = lower integer
-							 * splitted [2] = higher integer
-							 */
-							String data = phrase.substring(beginning, end);
-							data = data.substring(1, data.length() - 1);
-							String [] splitted = data.split("\\|");
-							Integer number = 0;
-							if (splitted.length>0){
-								int beg = Integer.parseInt(splitted[1]);
-								int end1 = Integer.parseInt(splitted[2]);
-								number = rndGen.nextInt(end1 - beg + 1) + beg;
+					if (sender.hasPermission("randEmotes.emote."+args[0])){
+						List<String> section = emotes.getStringList(args[0]);
+						String phrase = section.get(rndGen.nextInt(section.size()));
+						phrase = colorize(phrase);
+						Player pl = (Player) sender;
+						phrase = phrase.replaceAll("\\$player\\$", pl.getDisplayName());
+						@SuppressWarnings("deprecation")
+						Player snd = Bukkit.getPlayer(sender.getName());
+						// I get all the entities in a cubic radius defined in the config
+						List<Entity> lst = snd.getNearbyEntities(config.getInt("radius"), config.getInt("radius"), config.getInt("radius"));
+						/* Here I filter out $random|number|number$ and make it so it generates a random Integer, the regex is what allows me to
+						 * filter it out, \d means "A number digit" \d+ instead is "One or more number digits" 
+						 */
+						while (phrase.contains("$random")){
+							Pattern p = Pattern.compile("\\$random\\|\\d+\\|\\d+\\$");
+							Matcher m = p.matcher(phrase);
+							if (m.find()){
+								int beginning = m.start();
+								int end = m.end();
+								/*
+								 * Here I extract the information from the $random$ text variable, by splitting out the | symbols in an array
+								 * splitted [0] = "random" in any case
+								 * splitted [1] = lower integer
+								 * splitted [2] = higher integer
+								 */
+								String data = phrase.substring(beginning, end);
+								data = data.substring(1, data.length() - 1);
+								String [] splitted = data.split("\\|");
+								Integer number = 0;
+								if (splitted.length>0){
+									int beg = Integer.parseInt(splitted[1]);
+									int end1 = Integer.parseInt(splitted[2]);
+									number = rndGen.nextInt(end1 - beg + 1) + beg;
+								}
+								/* I have very little importance of what's replaced, but since in normal cases the interpretation of instructions
+								 * goes Left-to-right, i'll replace all the random numbers left-to-right
+								 */
+								phrase = phrase.replaceFirst("\\$random\\|\\d+\\|\\d+\\$", number.toString());
 							}
-							/* I have very little importance of what's replaced, but since in normal cases the interpretation of instructions
-							 * goes Left-to-right, i'll replace all the random numbers left-to-right
-							 */
-							phrase = phrase.replaceFirst("\\$random\\|\\d+\\|\\d+\\$", number.toString());
 						}
-					}
-					// Send the emote to the commandsender so they know the emote worked
-					sender.sendMessage(phrase);
-					// Send the emote to all the players (that's why instanceof) that are in the list i created at the beginning
-					for (Entity e: lst){
-						if (e instanceof Player){
-							e.sendMessage(phrase);
+						// Send the emote to the commandsender so they know the emote worked
+						sender.sendMessage(phrase);
+						// Send the emote to all the players (that's why instanceof) that are in the list i created at the beginning
+						for (Entity e: lst){
+							if (e instanceof Player){
+								e.sendMessage(phrase);
+							}
 						}
+					}else{
+						/*No permission*/
+						sender.sendMessage(defaultPermissionMessage);
 					}
 				}else{
 					//The emote doesn't exist, Cut it all.
