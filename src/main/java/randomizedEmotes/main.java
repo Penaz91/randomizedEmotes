@@ -40,10 +40,9 @@ public class main extends JavaPlugin{
 	public static HashMap<UUID,Inventory> _chests = new HashMap<UUID, Inventory>();
 	public static HashMap<UUID, ArrayList<String>> _availables = new HashMap<UUID, ArrayList<String>>();
 	public static HashMap<String, ItemStack> items = new HashMap<String, ItemStack>();
+	public static String prefix; 
 	@Override
 	public void onEnable(){
-		config = this.getConfig(); //loads the config
-		emotes = config.getConfigurationSection("emotes"); //loads the emote list as ConfigurationSection
 		/*
 		 * Creates the configuration folder is it doesnt exist
 		 * v--------------------------------------------------v
@@ -56,6 +55,9 @@ public class main extends JavaPlugin{
 		/*
 		 * ^--------------------------------------------------^
 		 */
+		config = this.getConfig(); //loads the config
+		emotes = config.getConfigurationSection("emotes"); //loads the emote list as ConfigurationSection
+		prefix = config.getString("GUIPrefix");
 		getServer().getPluginManager().registerEvents(new GUIListener(), this);
 		getServer().getPluginManager().registerEvents(new PlayerLogoutListener(), this);
 		generateItems();
@@ -65,6 +67,7 @@ public class main extends JavaPlugin{
 		reloadConfig();
 		config = getConfig();
 		emotes = config.getConfigurationSection("emotes"); //loads the emote list as ConfigurationSection
+		prefix = config.getString("GUIPrefix");
 		generateItems();
 		return true;
 	}
@@ -73,16 +76,16 @@ public class main extends JavaPlugin{
 		for (String item: emotes.getKeys(false)){
 			ItemStack book = new ItemStack(Material.BOOK);
 			ItemMeta data = book.getItemMeta();
-			Object[] onlinePlayers = Bukkit.getServer().getOnlinePlayers().toArray();
-			Player target = (Player) onlinePlayers[rndGen.nextInt(onlinePlayers.length)];
-			Player pl = (Player) onlinePlayers[rndGen.nextInt(onlinePlayers.length)];
-			data.setDisplayName(ChatColor.RED + item);
+			String pl = "Player1";
+			String target = "Player2";
+			String displayName = item.substring(0, 1).toUpperCase() + item.substring(1, item.length());
+			data.setDisplayName(colorize(prefix+displayName));
 			List<String> lore = new ArrayList<String>();
 			lore.add("Alone:");
 			List<String> section = emotes.getConfigurationSection(item).getStringList("alone");
 			String phrase = section.get(rndGen.nextInt(section.size()));
 			phrase = randomizedEmotes.main.colorize(phrase);
-			phrase = phrase.replaceAll("\\$player\\$", pl.getDisplayName());
+			phrase = phrase.replaceAll("\\$player\\$", pl);
 			while (phrase.contains("$random")){
 				Pattern p = Pattern.compile("\\$random\\|\\d+\\|\\d+\\$");
 				Matcher m = p.matcher(phrase);
@@ -143,8 +146,8 @@ public class main extends JavaPlugin{
 			if (section.size() != 0){
 				phrase = section.get(rndGen.nextInt(section.size()));
 				phrase = colorize(phrase);
-				phrase = phrase.replaceAll("\\$player\\$", pl.getDisplayName());
-				phrase = phrase.replaceAll("\\$target\\$", target.getDisplayName());
+				phrase = phrase.replaceAll("\\$player\\$", pl);
+				phrase = phrase.replaceAll("\\$target\\$", target);
 			}else{
 				phrase = "No Targeted Variant available";
 			}
