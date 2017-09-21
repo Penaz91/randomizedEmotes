@@ -3,6 +3,7 @@ package randomizedEmotes;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
@@ -11,13 +12,20 @@ import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.HandlerList;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,6 +34,12 @@ public class main extends JavaPlugin{
 	public static Random rndGen = new Random();
 	public static Configuration config = null;
 	public static String defaultPermissionMessage = "You don't have permissions to use this emote";
+	public static ItemStack nextPage = new ItemStack(Material.ARROW);
+	public static ItemStack prevPage = new ItemStack(Material.ARROW);
+	public static HashMap<UUID, Integer> _firstItems = new HashMap<UUID, Integer>();
+	public static HashMap<UUID,Inventory> _chests = new HashMap<UUID, Inventory>();
+	public static HashMap<UUID, ArrayList<String>> _availables = new HashMap<UUID, ArrayList<String>>();
+	public static HashMap<String, ItemStack> items = new HashMap<String, ItemStack>();
 	@Override
 	public void onEnable(){
 		config = this.getConfig(); //loads the config
@@ -42,13 +56,169 @@ public class main extends JavaPlugin{
 		/*
 		 * ^--------------------------------------------------^
 		 */
+		getServer().getPluginManager().registerEvents(new GUIListener(), this);
+		getServer().getPluginManager().registerEvents(new PlayerLogoutListener(), this);
+		generateItems();
+	}
+
+	public static void generateItems(){
+		for (String item: emotes.getKeys(false)){
+			ItemStack book = new ItemStack(Material.BOOK);
+			ItemMeta data = book.getItemMeta();
+			Object[] onlinePlayers = Bukkit.getServer().getOnlinePlayers().toArray();
+			Player target = (Player) onlinePlayers[rndGen.nextInt(onlinePlayers.length)];
+			Player pl = (Player) onlinePlayers[rndGen.nextInt(onlinePlayers.length)];
+			data.setDisplayName(ChatColor.RED + item);
+			List<String> lore = new ArrayList<String>();
+			lore.add("Alone:");
+			List<String> section = emotes.getConfigurationSection(item).getStringList("alone");
+			String phrase = section.get(rndGen.nextInt(section.size()));
+			phrase = randomizedEmotes.main.colorize(phrase);
+			phrase = phrase.replaceAll("\\$player\\$", pl.getDisplayName());
+			while (phrase.contains("$random")){
+				Pattern p = Pattern.compile("\\$random\\|\\d+\\|\\d+\\$");
+				Matcher m = p.matcher(phrase);
+				if (m.find()){
+					int beginning = m.start();
+					int end = m.end();
+					/*
+					 * Here I extract the information from the $random$ text variable, by splitting out the | symbols in an array
+					 * splitted [0] = "random" in any case
+					 * splitted [1] = lower integer
+					 * splitted [2] = higher integer
+					 */
+					String data1 = phrase.substring(beginning, end);
+					data1 = data1.substring(1, data1.length() - 1);
+					String [] splitted = data1.split("\\|");
+					Integer number = 0;
+					if (splitted.length>0){
+						int beg = Integer.parseInt(splitted[1]);
+						int end1 = Integer.parseInt(splitted[2]);
+						number = rndGen.nextInt(end1 - beg + 1) + beg;
+					}
+					/* I have very little importance of what's replaced, but since in normal cases the interpretation of instructions
+					 * goes Left-to-right, i'll replace all the random numbers left-to-right
+					 */
+					phrase = phrase.replaceFirst("\\$random\\|\\d+\\|\\d+\\$", number.toString());
+				}
+			}
+			lore.add(phrase);
+			lore.add("With a target:");
+			section = emotes.getConfigurationSection(item).getStringList("targeted");
+			while (phrase.contains("$random")){
+				Pattern p = Pattern.compile("\\$random\\|\\d+\\|\\d+\\$");
+				Matcher m = p.matcher(phrase);
+				if (m.find()){
+					int beginning = m.start();
+					int end = m.end();
+					/*
+					 * Here I extract the information from the $random$ text variable, by splitting out the | symbols in an array
+					 * splitted [0] = "random" in any case
+					 * splitted [1] = lower integer
+					 * splitted [2] = higher integer
+					 */
+					String data1 = phrase.substring(beginning, end);
+					data1 = data1.substring(1, data1.length() - 1);
+					String [] splitted = data1.split("\\|");
+					Integer number = 0;
+					if (splitted.length>0){
+						int beg = Integer.parseInt(splitted[1]);
+						int end1 = Integer.parseInt(splitted[2]);
+						number = rndGen.nextInt(end1 - beg + 1) + beg;
+					}
+					/* I have very little importance of what's replaced, but since in normal cases the interpretation of instructions
+					 * goes Left-to-right, i'll replace all the random numbers left-to-right
+					 */
+					phrase = phrase.replaceFirst("\\$random\\|\\d+\\|\\d+\\$", number.toString());
+				}
+			}
+			if (section.size() != 0){
+				phrase = section.get(rndGen.nextInt(section.size()));
+				phrase = colorize(phrase);
+				phrase = phrase.replaceAll("\\$player\\$", pl.getDisplayName());
+				phrase = phrase.replaceAll("\\$target\\$", target.getDisplayName());
+			}else{
+				phrase = "No Targeted Variant available";
+			}
+			lore.add(phrase);
+			data.setLore(lore);
+			book.setItemMeta(data);
+			items.put(item, book);
+		}
+	}
+	public static void updateGUI(Player pl){
+		Inventory GUI = _chests.get(pl.getUniqueId());
+		int firstItem = _firstItems.get(pl.getUniqueId());
+		ArrayList<String> available = _availables.get(pl.getUniqueId());
+		GUI.clear();
+		//Build the GUI and Divide in pages
+		int j=0;
+		for (int i=firstItem; i < firstItem+45 && available.size() > i; i++){
+			GUI.setItem(j, items.get(available.get(i)));
+			j++;
+		}
+		ItemMeta arrowData = prevPage.getItemMeta();
+		arrowData.setDisplayName("Previous Page");
+		prevPage.setItemMeta(arrowData);
+		arrowData = prevPage.getItemMeta();
+		arrowData.setDisplayName("Next Page");
+		nextPage.setItemMeta(arrowData);
+		GUI.setItem(45, prevPage);
+		GUI.setItem(53, nextPage);
+	}
+	public static void createAndShowGUI(Player pl){
+		int firstItem = 0;
+		Inventory GUI = null;
+		ArrayList<String> available = null;
+		if (_chests.containsKey(pl.getUniqueId())){
+			GUI = _chests.get(pl.getUniqueId());
+			firstItem = _firstItems.get(pl.getUniqueId());
+			available = _availables.get(pl.getUniqueId());
+		}else{
+			GUI =  Bukkit.createInventory(null, 54, "Emotes List");
+			_chests.put(pl.getUniqueId(), GUI);
+			available = new ArrayList<String>();
+			_availables.put(pl.getUniqueId(), available);
+			_firstItems.put(pl.getUniqueId(), firstItem);
+		}
+		//Get the emote list and filter by permission
+		available.clear();
+		Set<String> emotelist=emotes.getKeys(false);
+		for (String item : emotelist){
+			if (pl.hasPermission("randemotes.emote."+item)){
+				available.add(item);
+			}
+		}
+		//Build the GUI and Divide in pages
+		int j=0;
+		for (int i=firstItem; i < firstItem+45 && available.size() > i; i++){
+			GUI.setItem(j, items.get(available.get(i)));
+			j++;
+		}
+		ItemMeta arrowData = prevPage.getItemMeta();
+		arrowData.setDisplayName("Previous Page");
+		prevPage.setItemMeta(arrowData);
+		arrowData = prevPage.getItemMeta();
+		arrowData.setDisplayName("Next Page");
+		nextPage.setItemMeta(arrowData);
+		GUI.setItem(45, prevPage);
+		GUI.setItem(53, nextPage);
+		//Show the GUI
+		pl.openInventory(GUI);
 	}
 	
 	@Override
-	public void onDisable(){}
+	public void onDisable(){
+		HandlerList.unregisterAll(this);
+		getLogger().info("[RandEmotes] Plugin Disabled");
+	}
 	
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args){
+		if (cmd.getName().equalsIgnoreCase("emotegui")){
+			createAndShowGUI((Player) sender);
+			return true;
+		}
 		if (cmd.getName().equalsIgnoreCase("randemote")){
 			// If called with no arguments it just shows Plugin infos and emote list
 			if (args.length == 0){
@@ -58,12 +228,14 @@ public class main extends JavaPlugin{
 				sender.sendMessage(ChatColor.GOLD + "Usage: " + ChatColor.DARK_PURPLE + "/randemote" + ChatColor.GRAY + " <emote name>");
 				sender.sendMessage(ChatColor.GOLD + "--------------------<->--------------------");
 				Set<String> list = emotes.getKeys(false);
-				sender.sendMessage(ChatColor.GOLD + "Available emote names:");
+				sender.sendMessage(ChatColor.GOLD + "Available emote names with your current permissions:");
 				//Using a stringbuilder to make it easier to have a decent-ish list of emotes to show.
 				StringBuilder emotelist = new StringBuilder();
 				for (String s: list){
-					emotelist.append(ChatColor.GOLD + s);
-					emotelist.append(ChatColor.DARK_PURPLE + ", ");
+					if (sender.hasPermission("randemote.emote."+s)){
+						emotelist.append(ChatColor.GOLD + s);
+						emotelist.append(ChatColor.DARK_PURPLE + ", ");
+					}
 				}
 				sender.sendMessage(emotelist.toString());
 				return true;
@@ -91,7 +263,6 @@ public class main extends JavaPlugin{
 						Player pl = (Player) sender;
 						Player target = null;
 						if (args.length==2){
-							getLogger().info("The section is: " + section.toString());
 							if (!section.isEmpty()){
 								Collection<? extends Player> onlinePlayers = getServer().getOnlinePlayers();
 								for (Player item : onlinePlayers){
@@ -112,6 +283,22 @@ public class main extends JavaPlugin{
 						if (args.length==2){
 							phrase = phrase.replaceAll("\\$target\\$", target.getDisplayName());
 						}
+						if (target != null){
+							if (args.length == 2){
+								if (!targetSound.isEmpty()){
+									target.playSound(target.getLocation(), Sound.valueOf(targetSound), 50.0F, 50.0F);
+								}
+								if (!targetParticle.isEmpty()){
+									Location l = target.getLocation();
+									int count = emotes.getConfigurationSection(args[0]).getInt("particleTargetCount");
+									int Yoffset = emotes.getConfigurationSection(args[0]).getInt("particleTargetYOffset");
+									target.spawnParticle(Particle.valueOf(playerParticle), l.getX(), l.getY() + Yoffset, l.getZ(), count);
+								}	
+							}else{
+								sender.sendMessage("The player selected is not online!");
+								return true;
+							}
+						}
 						if (!selfSound.isEmpty()){
 							pl.playSound(pl.getLocation(), Sound.valueOf(selfSound), 50.0F, 50.0F);
 						}
@@ -121,21 +308,14 @@ public class main extends JavaPlugin{
 							int Yoffset = emotes.getConfigurationSection(args[0]).getInt("particlePlayerYOffset");
 							pl.spawnParticle(Particle.valueOf(playerParticle), l.getX(), l.getY() + Yoffset, l.getZ(), count);
 						}
-						if (target != null){
-							if (!targetSound.isEmpty()){
-								target.playSound(target.getLocation(), Sound.valueOf(targetSound), 50.0F, 50.0F);
-							}
-							if (!targetParticle.isEmpty()){
-								Location l = target.getLocation();
-								int count = emotes.getConfigurationSection(args[0]).getInt("particleTargetCount");
-								int Yoffset = emotes.getConfigurationSection(args[0]).getInt("particleTargetYOffset");
-								target.spawnParticle(Particle.valueOf(playerParticle), l.getX(), l.getY() + Yoffset, l.getZ(), count);
-							}	
-						}
 						@SuppressWarnings("deprecation")
 						Player snd = Bukkit.getPlayer(sender.getName());
 						// I get all the entities in a cubic radius defined in the config
 						List<Entity> lst = snd.getNearbyEntities(config.getInt("radius"), config.getInt("radius"), config.getInt("radius"));
+						if (!lst.contains(target) && args.length == 2){
+							sender.sendMessage("Your target is too far!");
+							return true;
+						}
 						/* Here I filter out $random|number|number$ and make it so it generates a random Integer, the regex is what allows me to
 						 * filter it out, \d means "A number digit" \d+ instead is "One or more number digits" 
 						 */
@@ -170,7 +350,7 @@ public class main extends JavaPlugin{
 						sender.sendMessage(phrase);
 						// Send the emote to all the players (that's why instanceof) that are in the list i created at the beginning
 						everybodySound = emotes.getConfigurationSection(args[0]).getString("soundEverybody");
-						boolean playEverybody = (everybodySound != "");
+						boolean playEverybody = (!everybodySound.isEmpty());
 						for (Entity e: lst){
 							if (e instanceof Player){
 								e.sendMessage(phrase);
@@ -194,7 +374,7 @@ public class main extends JavaPlugin{
 		return true;
 	}
 
-	private String colorize(String phrase) {
+	private static String colorize(String phrase) {
 		/*
 		 * Simple method to replace the & color codes with the respective colors.
 		 */
