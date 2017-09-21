@@ -2,6 +2,9 @@ package randomizedEmotes;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.Configuration;
@@ -11,6 +14,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -64,16 +68,70 @@ public class main extends JavaPlugin{
 				sender.sendMessage(emotelist.toString());
 				return true;
 			}
-			// If calles with an argument I look it it's inside the ConfigurationSection that contains all the emotes
-			if (args.length == 1){
+			// If calls with an argument I look it it's inside the ConfigurationSection that contains all the emotes
+			if (args.length >= 1){
 				//Emote things here
 				if (emotes.contains(args[0])){
 					if (sender.hasPermission("randEmotes.emote."+args[0])){
-						List<String> section = emotes.getStringList(args[0]);
+						List<String> section = null;
+						String selfSound = "";
+						String targetSound = "";
+						String everybodySound = "";
+						String playerParticle = "";
+						String targetParticle = "";
+						if (args.length==1){
+							//alone
+							section = emotes.getConfigurationSection(args[0]).getStringList("alone");
+						}else if (args.length==2){
+							//targeted
+							section = emotes.getConfigurationSection(args[0]).getStringList("targeted");
+						}
+						selfSound = emotes.getConfigurationSection(args[0]).getString("soundPlayer");
+						playerParticle = emotes.getConfigurationSection(args[0]).getString("particlePlayer");
+						Player pl = (Player) sender;
+						Player target = null;
+						if (args.length==2){
+							getLogger().info("The section is: " + section.toString());
+							if (!section.isEmpty()){
+								Collection<? extends Player> onlinePlayers = getServer().getOnlinePlayers();
+								for (Player item : onlinePlayers){
+									if (item.getName().equalsIgnoreCase(args[1])){
+										target = item;
+									}
+								}
+							}else{
+								sender.sendMessage("This emote doesn't have a 'targeted' section");
+								return true;
+							}
+						}
+						targetParticle = emotes.getConfigurationSection(args[0]).getString("particleTarget");
+						targetSound = emotes.getConfigurationSection(args[0]).getString("soundTarget"); 
 						String phrase = section.get(rndGen.nextInt(section.size()));
 						phrase = colorize(phrase);
-						Player pl = (Player) sender;
 						phrase = phrase.replaceAll("\\$player\\$", pl.getDisplayName());
+						if (args.length==2){
+							phrase = phrase.replaceAll("\\$target\\$", target.getDisplayName());
+						}
+						if (!selfSound.isEmpty()){
+							pl.playSound(pl.getLocation(), Sound.valueOf(selfSound), 50.0F, 50.0F);
+						}
+						if (!playerParticle.isEmpty()){
+							Location l = pl.getLocation();
+							int count = emotes.getConfigurationSection(args[0]).getInt("particlePlayerCount");
+							int Yoffset = emotes.getConfigurationSection(args[0]).getInt("particlePlayerYOffset");
+							pl.spawnParticle(Particle.valueOf(playerParticle), l.getX(), l.getY() + Yoffset, l.getZ(), count);
+						}
+						if (target != null){
+							if (!targetSound.isEmpty()){
+								target.playSound(target.getLocation(), Sound.valueOf(targetSound), 50.0F, 50.0F);
+							}
+							if (!targetParticle.isEmpty()){
+								Location l = target.getLocation();
+								int count = emotes.getConfigurationSection(args[0]).getInt("particleTargetCount");
+								int Yoffset = emotes.getConfigurationSection(args[0]).getInt("particleTargetYOffset");
+								target.spawnParticle(Particle.valueOf(playerParticle), l.getX(), l.getY() + Yoffset, l.getZ(), count);
+							}	
+						}
 						@SuppressWarnings("deprecation")
 						Player snd = Bukkit.getPlayer(sender.getName());
 						// I get all the entities in a cubic radius defined in the config
@@ -111,9 +169,14 @@ public class main extends JavaPlugin{
 						// Send the emote to the commandsender so they know the emote worked
 						sender.sendMessage(phrase);
 						// Send the emote to all the players (that's why instanceof) that are in the list i created at the beginning
+						everybodySound = emotes.getConfigurationSection(args[0]).getString("soundEverybody");
+						boolean playEverybody = (everybodySound != "");
 						for (Entity e: lst){
 							if (e instanceof Player){
 								e.sendMessage(phrase);
+								if (playEverybody){
+									((Player) e).playSound(e.getLocation(), Sound.valueOf(everybodySound), 50.0F, 50.0F);
+								}
 							}
 						}
 					}else{

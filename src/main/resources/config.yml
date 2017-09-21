@@ -1,9 +1,34 @@
 "radius": 10
 "emotes":
   "coin":
-    - "$player$ flips a coin: heads"
-    - "$player$ flips a coin: tails"
-    - "$player$ flips a coin: it landed on its edge... HOW???"
+    alone:
+      - "$player$ flips a coin: heads"
+      - "$player$ flips a coin: tails"
+      - "$player$ flips a coin: it landed on its edge... HOW???"
+    targeted:
+      - "$player$ flips a coin, it lands on $target$'s head: heads"
+      - "$player$ flips a coin, it lands on $target$'s head: tails"
+      - "$player$ flips a coin: it sticks to $target$'s arm... HOW???"
+    soundEverybody: "BLOCK_ANVIL_BREAK"
+    soundPlayer: "BLOCK_ANVIL_BREAK"
+    soundTarget: "BLOCK_ANVIL_BREAK"
+    particlePlayer: ""
+    particlePlayerCount: 1
+    particlePlayerYOffset: 5
+    particleTarget: ""
+    particleTargetCount: 1
+    particleTargetYOffset: 5
   "d20":
-    - "$player$ throws a 20-sided dice: $random|1|20$"
-    - "$player$ throws a D-20: $random|1|20$"
+    alone:
+      - "$player$ throws a 20-sided dice: $random|1|20$"
+      - "$player$ throws a D-20: $random|1|20$"
+    targeted: []
+    soundEverybody: ""
+    soundPlayer: ""
+    soundTarget: ""
+    particlePlayer: ""
+    particlePlayerCount: 1
+    particlePlayerYOffset: 5
+    particleTarget: ""
+    particleTargetCount: 1
+    particleTargetYOffset: 5
