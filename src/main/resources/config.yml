@@ -1,5 +1,7 @@
 "radius": 10
 "GUIPrefix": "&f&l"
+"cooldowns": true
+"cooldownTime": 1000
 "emotes":
   "coin":
     alone:

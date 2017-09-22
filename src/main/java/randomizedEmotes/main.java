@@ -41,6 +41,8 @@ public class main extends JavaPlugin{
 	public static HashMap<UUID, ArrayList<String>> _availables = new HashMap<UUID, ArrayList<String>>();
 	public static HashMap<String, ItemStack> items = new HashMap<String, ItemStack>();
 	public static String prefix; 
+	public static HashMap<UUID, Long> cooldowns = null;
+	public static long cooldownTime = 0;
 	@Override
 	public void onEnable(){
 		/*
@@ -60,6 +62,10 @@ public class main extends JavaPlugin{
 		prefix = config.getString("GUIPrefix");
 		getServer().getPluginManager().registerEvents(new GUIListener(), this);
 		getServer().getPluginManager().registerEvents(new PlayerLogoutListener(), this);
+		if (config.getBoolean("cooldowns")){
+			cooldowns = new HashMap<UUID, Long>();
+			cooldownTime = config.getLong("cooldownTime");
+		}
 		generateItems();
 	}
 	
@@ -68,6 +74,10 @@ public class main extends JavaPlugin{
 		config = getConfig();
 		emotes = config.getConfigurationSection("emotes"); //loads the emote list as ConfigurationSection
 		prefix = config.getString("GUIPrefix");
+		if (config.getBoolean("cooldowns")){
+			cooldowns = new HashMap<UUID, Long>();
+			cooldownTime = config.getLong("cooldownTime");
+		}
 		generateItems();
 		return true;
 	}
@@ -261,6 +271,17 @@ public class main extends JavaPlugin{
 				//Emote things here
 				if (emotes.contains(args[0])){
 					if (sender.hasPermission("randEmotes.emote."+args[0])){
+						if (config.getBoolean("cooldowns")){
+							if (!cooldowns.containsKey(((Player) sender).getUniqueId())){
+								cooldowns.put(((Player) sender).getUniqueId(), System.currentTimeMillis());
+							}else{
+								if (System.currentTimeMillis() - cooldowns.get(((Player) sender).getUniqueId()) < cooldownTime){
+									sender.sendMessage("Please wait at least " + ((int) cooldownTime/1000) + "s before using another emote");
+									return true;
+								}
+							}
+							cooldowns.put(((Player) sender).getUniqueId(), System.currentTimeMillis());
+						}
 						List<String> section = null;
 						String selfSound = "";
 						String targetSound = "";
