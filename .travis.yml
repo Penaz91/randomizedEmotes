@@ -7,4 +7,4 @@ deploy:
   skip_cleanup: true
   on:
     repo: Penaz91/randomizedEmotes
-  name: 0.0.2 Build $(date + '%d/%m/%Y %R')
+  name: 0.0.2 Build $(date +'%d/%m/%Y %R')
