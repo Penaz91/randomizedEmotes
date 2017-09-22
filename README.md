@@ -1,5 +1,7 @@
 # randomizedEmotes For Spigot 1.10
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Build Status](https://travis-ci.org/Penaz91/randomizedEmotes.svg?branch=master)](https://travis-ci.org/Penaz91/randomizedEmotes)
+
 randomizedEmotes is a small Spigot plugin that takes a random emote from a
 certain category defined in the configuration and gives it out to all the
 players in a certain radius. This is great if paired with any CommandItems
