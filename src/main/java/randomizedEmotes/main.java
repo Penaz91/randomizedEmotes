@@ -46,6 +46,7 @@ public class main extends JavaPlugin{
 	public static String prefix; 
 	public static HashMap<UUID, Long> cooldowns = null;
 	public static long cooldownTime = 0;
+	public static String logo = ChatColor.BLUE + "[" + ChatColor.DARK_PURPLE + "RandEmotes" + ChatColor.BLUE + "] ";
 	@Override
 	public void onEnable(){
 		/*
@@ -84,6 +85,37 @@ public class main extends JavaPlugin{
 		generateItems();
 		return true;
 	}
+	
+	public static String insertRandomNumbers(String phrase){
+		while (phrase.contains("$random")){
+			Pattern p = Pattern.compile("\\$random\\|\\d+\\|\\d+\\$");
+			Matcher m = p.matcher(phrase);
+			if (m.find()){
+				int beginning = m.start();
+				int end = m.end();
+				/*
+				 * Here I extract the information from the $random$ text variable, by splitting out the | symbols in an array
+				 * splitted [0] = "random" in any case
+				 * splitted [1] = lower integer
+				 * splitted [2] = higher integer
+				 */
+				String data1 = phrase.substring(beginning, end);
+				data1 = data1.substring(1, data1.length() - 1);
+				String [] splitted = data1.split("\\|");
+				Integer number = 0;
+				if (splitted.length>0){
+					int beg = Integer.parseInt(splitted[1]);
+					int end1 = Integer.parseInt(splitted[2]);
+					number = rndGen.nextInt(end1 - beg + 1) + beg;
+				}
+				/* I have very little importance of what's replaced, but since in normal cases the interpretation of instructions
+				 * goes Left-to-right, i'll replace all the random numbers left-to-right
+				 */
+				phrase = phrase.replaceFirst("\\$random\\|\\d+\\|\\d+\\$", number.toString());
+			}
+		}
+		return phrase;
+	}
 
 	public static void generateItems(){
 		for (String item: emotes.getKeys(false)){
@@ -99,63 +131,11 @@ public class main extends JavaPlugin{
 			String phrase = section.get(rndGen.nextInt(section.size()));
 			phrase = randomizedEmotes.main.colorize(phrase);
 			phrase = phrase.replaceAll("\\$player\\$", pl);
-			while (phrase.contains("$random")){
-				Pattern p = Pattern.compile("\\$random\\|\\d+\\|\\d+\\$");
-				Matcher m = p.matcher(phrase);
-				if (m.find()){
-					int beginning = m.start();
-					int end = m.end();
-					/*
-					 * Here I extract the information from the $random$ text variable, by splitting out the | symbols in an array
-					 * splitted [0] = "random" in any case
-					 * splitted [1] = lower integer
-					 * splitted [2] = higher integer
-					 */
-					String data1 = phrase.substring(beginning, end);
-					data1 = data1.substring(1, data1.length() - 1);
-					String [] splitted = data1.split("\\|");
-					Integer number = 0;
-					if (splitted.length>0){
-						int beg = Integer.parseInt(splitted[1]);
-						int end1 = Integer.parseInt(splitted[2]);
-						number = rndGen.nextInt(end1 - beg + 1) + beg;
-					}
-					/* I have very little importance of what's replaced, but since in normal cases the interpretation of instructions
-					 * goes Left-to-right, i'll replace all the random numbers left-to-right
-					 */
-					phrase = phrase.replaceFirst("\\$random\\|\\d+\\|\\d+\\$", number.toString());
-				}
-			}
+			phrase = insertRandomNumbers(phrase);
 			lore.add(phrase);
 			lore.add("With a target:");
 			section = emotes.getConfigurationSection(item).getStringList("targeted");
-			while (phrase.contains("$random")){
-				Pattern p = Pattern.compile("\\$random\\|\\d+\\|\\d+\\$");
-				Matcher m = p.matcher(phrase);
-				if (m.find()){
-					int beginning = m.start();
-					int end = m.end();
-					/*
-					 * Here I extract the information from the $random$ text variable, by splitting out the | symbols in an array
-					 * splitted [0] = "random" in any case
-					 * splitted [1] = lower integer
-					 * splitted [2] = higher integer
-					 */
-					String data1 = phrase.substring(beginning, end);
-					data1 = data1.substring(1, data1.length() - 1);
-					String [] splitted = data1.split("\\|");
-					Integer number = 0;
-					if (splitted.length>0){
-						int beg = Integer.parseInt(splitted[1]);
-						int end1 = Integer.parseInt(splitted[2]);
-						number = rndGen.nextInt(end1 - beg + 1) + beg;
-					}
-					/* I have very little importance of what's replaced, but since in normal cases the interpretation of instructions
-					 * goes Left-to-right, i'll replace all the random numbers left-to-right
-					 */
-					phrase = phrase.replaceFirst("\\$random\\|\\d+\\|\\d+\\$", number.toString());
-				}
-			}
+			phrase = insertRandomNumbers(phrase);
 			if (section.size() != 0){
 				phrase = section.get(rndGen.nextInt(section.size()));
 				phrase = colorize(phrase);
@@ -170,6 +150,7 @@ public class main extends JavaPlugin{
 			items.put(item, book);
 		}
 	}
+	
 	public static void updateGUI(Player pl){
 		Inventory GUI = _chests.get(pl.getUniqueId());
 		int firstItem = _firstItems.get(pl.getUniqueId());
@@ -190,6 +171,7 @@ public class main extends JavaPlugin{
 		GUI.setItem(45, prevPage);
 		GUI.setItem(53, nextPage);
 	}
+
 	public static void createAndShowGUI(Player pl){
 		int firstItem = 0;
 		Inventory GUI = null;
@@ -234,7 +216,7 @@ public class main extends JavaPlugin{
 	@Override
 	public void onDisable(){
 		HandlerList.unregisterAll(this);
-		getLogger().info("[RandEmotes] Plugin Disabled");
+		getLogger().info(logo + "Plugin Disabled");
 	}
 	
 	@Override
@@ -245,24 +227,24 @@ public class main extends JavaPlugin{
 		}
 		if (cmd.getName().equalsIgnoreCase("randemotereload")){
 			reloadConfigCommand();
-			sender.sendMessage("Config Reloaded");
-			getLogger().info("[RandEmote] Config Reloaded");
+			sender.sendMessage(logo + "Config Reloaded");
+			getLogger().info(logo + "Config Reloaded");
 		}
 		if (cmd.getName().equalsIgnoreCase("randemote")){
 			// If called with no arguments it just shows Plugin infos and emote list
 			if (args.length == 0){
-				sender.sendMessage(ChatColor.GOLD + "------<->-----RandomizedEmotes-----<->------");
-				sender.sendMessage(ChatColor.GOLD + "A plugin by: " + ChatColor.DARK_RED + "Penaz");
-				sender.sendMessage(ChatColor.GOLD + "--------------------<->--------------------");
-				sender.sendMessage(ChatColor.GOLD + "Usage: " + ChatColor.DARK_PURPLE + "/randemote" + ChatColor.GRAY + " <emote name>");
-				sender.sendMessage(ChatColor.GOLD + "--------------------<->--------------------");
+				sender.sendMessage(ChatColor.BLUE + "------<->-----" + ChatColor.DARK_PURPLE + "RandomizedEmotes" + ChatColor.BLUE + "-----<->------");
+				sender.sendMessage(ChatColor.BLUE + "A plugin by: " + ChatColor.DARK_RED + "Penaz");
+				sender.sendMessage(ChatColor.BLUE + "--------------------<->--------------------");
+				sender.sendMessage(ChatColor.BLUE + "Usage: " + ChatColor.DARK_PURPLE + "/randemote" + ChatColor.GRAY + " <emote name>");
+				sender.sendMessage(ChatColor.BLUE + "--------------------<->--------------------");
 				Set<String> list = emotes.getKeys(false);
-				sender.sendMessage(ChatColor.GOLD + "Available emote names with your current permissions:");
+				sender.sendMessage(ChatColor.BLUE + "Available emote names with your current permissions:");
 				//Using a stringbuilder to make it easier to have a decent-ish list of emotes to show.
 				StringBuilder emotelist = new StringBuilder();
 				for (String s: list){
 					if (sender.hasPermission("randemote.emote."+s)){
-						emotelist.append(ChatColor.GOLD + s);
+						emotelist.append(ChatColor.BLUE + s);
 						emotelist.append(ChatColor.DARK_PURPLE + ", ");
 					}
 				}
@@ -279,7 +261,7 @@ public class main extends JavaPlugin{
 								cooldowns.put(((Player) sender).getUniqueId(), System.currentTimeMillis());
 							}else{
 								if (System.currentTimeMillis() - cooldowns.get(((Player) sender).getUniqueId()) < cooldownTime){
-									sender.sendMessage("Please wait at least " + ((int) cooldownTime/1000) + "s before using another emote");
+									sender.sendMessage(logo + "Please wait at least " + ((int) cooldownTime/1000) + "s before using another emote");
 									return true;
 								}
 							}
@@ -311,7 +293,7 @@ public class main extends JavaPlugin{
 									}
 								}
 							}else{
-								sender.sendMessage("This emote doesn't have a 'targeted' section");
+								sender.sendMessage(logo + "This emote doesn't have a 'targeted' section");
 								return true;
 							}
 						}
@@ -335,7 +317,7 @@ public class main extends JavaPlugin{
 									target.spawnParticle(Particle.valueOf(playerParticle), l.getX(), l.getY() + Yoffset, l.getZ(), count);
 								}	
 							}else{
-								sender.sendMessage("The player selected is not online!");
+								sender.sendMessage(logo + "The player selected is not online!");
 								return true;
 							}
 						}
@@ -348,44 +330,17 @@ public class main extends JavaPlugin{
 							int Yoffset = emotes.getConfigurationSection(args[0]).getInt("particlePlayerYOffset");
 							pl.spawnParticle(Particle.valueOf(playerParticle), l.getX(), l.getY() + Yoffset, l.getZ(), count);
 						}
-						@SuppressWarnings("deprecation")
-						Player snd = Bukkit.getPlayer(sender.getName());
+						Player snd = (Player) sender;
 						// I get all the entities in a cubic radius defined in the config
 						List<Entity> lst = snd.getNearbyEntities(config.getInt("radius"), config.getInt("radius"), config.getInt("radius"));
 						if (!lst.contains(target) && args.length == 2){
-							sender.sendMessage("Your target is too far!");
+							sender.sendMessage(logo + "Your target is too far!");
 							return true;
 						}
 						/* Here I filter out $random|number|number$ and make it so it generates a random Integer, the regex is what allows me to
 						 * filter it out, \d means "A number digit" \d+ instead is "One or more number digits" 
 						 */
-						while (phrase.contains("$random")){
-							Pattern p = Pattern.compile("\\$random\\|\\d+\\|\\d+\\$");
-							Matcher m = p.matcher(phrase);
-							if (m.find()){
-								int beginning = m.start();
-								int end = m.end();
-								/*
-								 * Here I extract the information from the $random$ text variable, by splitting out the | symbols in an array
-								 * splitted [0] = "random" in any case
-								 * splitted [1] = lower integer
-								 * splitted [2] = higher integer
-								 */
-								String data = phrase.substring(beginning, end);
-								data = data.substring(1, data.length() - 1);
-								String [] splitted = data.split("\\|");
-								Integer number = 0;
-								if (splitted.length>0){
-									int beg = Integer.parseInt(splitted[1]);
-									int end1 = Integer.parseInt(splitted[2]);
-									number = rndGen.nextInt(end1 - beg + 1) + beg;
-								}
-								/* I have very little importance of what's replaced, but since in normal cases the interpretation of instructions
-								 * goes Left-to-right, i'll replace all the random numbers left-to-right
-								 */
-								phrase = phrase.replaceFirst("\\$random\\|\\d+\\|\\d+\\$", number.toString());
-							}
-						}
+						phrase = insertRandomNumbers(phrase);
 						// Send the emote to the commandsender so they know the emote worked
 						sender.sendMessage(phrase);
 						// Send the emote to all the players (that's why instanceof) that are in the list i created at the beginning
@@ -401,11 +356,11 @@ public class main extends JavaPlugin{
 						}
 					}else{
 						/*No permission*/
-						sender.sendMessage(defaultPermissionMessage);
+						sender.sendMessage(logo + defaultPermissionMessage);
 					}
 				}else{
 					//The emote doesn't exist, Cut it all.
-					sender.sendMessage("This emote doesn't exist");
+					sender.sendMessage(logo + "This emote doesn't exist");
 				}
 				return true;
 			}

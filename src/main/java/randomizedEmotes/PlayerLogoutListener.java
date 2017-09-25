@@ -15,6 +15,6 @@ public class PlayerLogoutListener implements Listener{
 			if (main.config.getBoolean("cooldowns")){
 				main.cooldowns.remove(event.getPlayer().getUniqueId());
 			}
-			Bukkit.getLogger().info("[RandEmotes] Removed player from the list of GUIs and cooldowns");
+			Bukkit.getLogger().info(main.logo + "Removed player from the list of GUIs and cooldowns");
 	}
 }
