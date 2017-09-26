@@ -13,13 +13,17 @@ public class GUIListener implements Listener{
 	@EventHandler
 	public void onInventoryClick(InventoryClickEvent event){
 		Player player = (Player) event.getWhoClicked();
-		ItemStack clicked = event.getCurrentItem();
 		Inventory inventory = event.getInventory();
-		if (clicked == null){
+		if (!main._chests.containsKey(player.getUniqueId())){
+			// Inventory not generated yet, abort. Should fix /egui in creative
 			return;
 		}
-		int firstItem = main._firstItems.get(player.getUniqueId());
 		if (inventory.getName().equals(main._chests.get(player.getUniqueId()).getName())) {
+			ItemStack clicked = event.getCurrentItem();
+			if (clicked == null){
+				return;
+			}
+			int firstItem = main._firstItems.get(player.getUniqueId());
 			event.setCancelled(true);
 			if (clicked.equals(main.prevPage)){
 				//goto previous
