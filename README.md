@@ -1,4 +1,4 @@
-# randomizedEmotes For Spigot 1.10
+# randomizedEmotes For Spigot 1.12
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Build Status](https://travis-ci.org/Penaz91/randomizedEmotes.svg?branch=master)](https://travis-ci.org/Penaz91/randomizedEmotes)
 
@@ -9,13 +9,17 @@ plugin.
 
 ### Commands
 
-- **/randemote**: Shows the plugin information and the list of emotes available
-- **/randemote <name>**: Performs the emote in the <name> category
+- **/randemote|/re**: Shows the plugin information and the list of emotes available
+- **/randemote [name] | /re [name]**: Performs the emote in the <name> category
+- **/rer|/randemotereload**: Reloads the configuration files
+- **/emotegui|/egui**: Shows the Emote List in a GUI
 
 ### Permissions
 
-- **randomEmote.use**: Only permission available to use all the emotes and info
-panel
+- **randomEmote.use**: Permission available to use any command
+- **randomEmote.emote.[emotename]**: Single permission to use the [emotename] emote
+- **randomEmote.reload** Permission to reload the plugin's configuration
+- **randomEmote.gui** Permission to use the GUI
 
 ### Default emotes
 

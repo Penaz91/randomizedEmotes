@@ -191,7 +191,7 @@ public class main extends JavaPlugin{
 		available.clear();
 		Set<String> emotelist=emotes.getKeys(false);
 		for (String item : emotelist){
-			if (pl.hasPermission("randemotes.emote."+item)){
+			if (pl.hasPermission("randomEmote.emote."+item)){
 				available.add(item);
 			}
 		}
@@ -243,7 +243,7 @@ public class main extends JavaPlugin{
 				//Using a stringbuilder to make it easier to have a decent-ish list of emotes to show.
 				StringBuilder emotelist = new StringBuilder();
 				for (String s: list){
-					if (sender.hasPermission("randemote.emote."+s)){
+					if (sender.hasPermission("randomEmote.emote."+s)){
 						emotelist.append(ChatColor.BLUE + s);
 						emotelist.append(ChatColor.DARK_PURPLE + ", ");
 					}
@@ -255,7 +255,7 @@ public class main extends JavaPlugin{
 			if (args.length >= 1){
 				//Emote things here
 				if (emotes.contains(args[0])){
-					if (sender.hasPermission("randEmotes.emote."+args[0])){
+					if (sender.hasPermission("randomEmote.emote."+args[0])){
 						if (config.getBoolean("cooldowns")){
 							if (!cooldowns.containsKey(((Player) sender).getUniqueId())){
 								cooldowns.put(((Player) sender).getUniqueId(), System.currentTimeMillis());
