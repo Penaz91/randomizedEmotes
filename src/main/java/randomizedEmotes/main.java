@@ -301,9 +301,9 @@ public class main extends JavaPlugin{
 						targetSound = emotes.getConfigurationSection(args[0]).getString("soundTarget"); 
 						String phrase = section.get(rndGen.nextInt(section.size()));
 						phrase = colorize(phrase);
-						phrase = phrase.replaceAll("\\$player\\$", pl.getDisplayName());
+						phrase = phrase.replaceAll("\\$player\\$", pl.getName​());
 						if (args.length==2){
-							phrase = phrase.replaceAll("\\$target\\$", target.getDisplayName());
+							phrase = phrase.replaceAll("\\$target\\$", target.getName​());
 						}
 						if (target != null){
 							if (args.length == 2){
