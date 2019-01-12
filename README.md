@@ -7,6 +7,10 @@ certain category defined in the configuration and gives it out to all the
 players in a certain radius. This is great if paired with any CommandItems
 plugin.
 
+### Notes on branches
+
+If you want to use real player names inside the messages instead of Displaynames (which show nicks), you can switch to the RealPlayerNames branch.
+
 ### Commands
 
 - **/randemote|/re**: Shows the plugin information and the list of emotes available
